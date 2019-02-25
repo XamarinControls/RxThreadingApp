@@ -136,7 +136,7 @@ namespace ThreadingApp
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
 
-            //For testing purposes
+            //For testing/logging purposes
             RxApp.MainThreadScheduler.Schedule(
                 () => Result = $"{Result}{Environment.NewLine} - {result} ThreadId: {threadId}");
         }
