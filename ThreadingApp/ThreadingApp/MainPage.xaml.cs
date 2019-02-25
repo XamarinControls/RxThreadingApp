@@ -9,11 +9,12 @@ namespace ThreadingApp
         {
             InitializeComponent();
 
-            var ctx = new MainPageViewModel();
-            ViewModel = ctx;
+            ViewModel = new MainPageViewModel();
 
-            this.OneWayBind(ViewModel, x => x.Result, x => x.ResultEditor.Text);
-            this.BindCommand(ViewModel, x => x.Start, x => x.StartButton);
+            this.OneWayBind(ViewModel, x => x.Result, x => x.ResultLabel.Text);
+            this.BindCommand(ViewModel, x => x.SubscribeOnInnerChain, x => x.SubscribeOnInnerChainButton);
+            this.BindCommand(ViewModel, x => x.SubscribeOnCommandOutput, x => x.SubscribeOnCommandOutputButton);
+            this.BindCommand(ViewModel, x => x.Clear, x => x.ClearButton);
         }
     }
 }

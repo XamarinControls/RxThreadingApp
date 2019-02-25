@@ -1,16 +1,20 @@
 ﻿using ReactiveUI;
 using System;
 using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Text;
 using System.Threading;
 
 namespace ThreadingApp
 {
     public class MainPageViewModel : ReactiveObject
     {
-        public ReactiveCommand<Unit, Unit> Start { get; }
+        public ReactiveCommand<Unit, Unit> SubscribeOnInnerChain { get; }
+
+        public ReactiveCommand<Unit, Unit> SubscribeOnCommandOutput { get; }
+
+        public ReactiveCommand<Unit, Unit> Clear { get; }
 
         private string _result;
         public string Result
@@ -19,63 +23,107 @@ namespace ThreadingApp
             set => this.RaiseAndSetIfChanged(ref _result, value);
         }
 
-        StringBuilder _builder = new StringBuilder();
-
         public MainPageViewModel()
         {
-            AppendResult("CTOR");
+            AppendResult("Ctor");
 
-            Start = ReactiveCommand
+            Clear = ReactiveCommand
+                .Create<Unit, Unit>(_ =>
+                {
+                    //Conclusion: Command execution runs fully on the main thread here as it has not been set
+                    ClearResult();
+                    return Unit.Default;
+                },
+                outputScheduler: RxApp.MainThreadScheduler);
+
+            SubscribeOnCommandOutput = ReactiveCommand
                 .CreateFromObservable<Unit, Unit>(_ =>
                 {
-                    AppendResult($"COMMAND BODY");
+                    AppendResult($"ReactiveCommand body");
+
+                    //Conclusion: Command execution runs fully on the main thread here as it has not been set
+                    return GetSomeFakeData()
+                        .Select(result =>
+                        {
+                            AppendResult("Observable chain");
+                            return result;
+                        });
+                },
+                outputScheduler: RxApp.MainThreadScheduler);
+
+            SubscribeOnInnerChain = ReactiveCommand
+                .CreateFromObservable<Unit, Unit>(_ =>
+                {
+                    //Conclusion: Everything that runs on the command body will assume the caller thread (eg InvokeCommand)
+                    AppendResult($"ReactiveCommand body");
 
                     return GetSomeFakeData()
                         .Select(result =>
                         {
-                            AppendResult("COMMAND CHAIN");
+                            AppendResult("Observable chain");
                             return result;
                         })
+                        //Conclusion: This is what makes the operation to run on the taskpool
                         .SubscribeOn(RxApp.TaskpoolScheduler);
                 },
+                //Conclusion: Output Scheduler must be the Main Thread (it is by default), otherwise the bound commands will "hang" the execution of the UI
                 outputScheduler: RxApp.MainThreadScheduler);
 
-            Start
+            Clear.Subscribe();
+
+            SubscribeOnCommandOutput
                 .Select(result =>
                 {
-                    AppendResult("COMMAND CHAIN BEFORE SUBSCRIBEON");
+                    AppendResult("Command output before SubscribeOn");
                     return result;
                 })
+                //Conclusion: SubscribeOn won't be considered when set on the command chain!
+                //Regular observable chains will consider this (like on line 66), this is not valid for the ReactiveCommand only. WHY?
                 .SubscribeOn(RxApp.TaskpoolScheduler)
                 .Select(result =>
                 {
-                    AppendResult("COMMAND CHAIN AFTER SUBSCRIBEON");
+                    AppendResult("Command output after SubscribeOn");
+                    return result;
+                })
+                .ObserveOn(RxApp.TaskpoolScheduler)
+                .Select(result =>
+                {
+                    AppendResult("Command output after ObserveOn");
                     return result;
                 })
                 .ObserveOn(RxApp.MainThreadScheduler)
+                //Conclusion: Multiple uses of ObserveOn will be respected properly
+                .Subscribe(_ =>
+                {
+                    AppendResult("Observer OnNext");
+                });
+
+            SubscribeOnInnerChain
                 .Select(result =>
                 {
-                    AppendResult("COMMAND CHAIN AFTER OBSERVEON");
+                    AppendResult("Command output");
                     return result;
                 })
-                .Subscribe(
-                    onNext: response =>
-                    {
-                        AppendResult("COMMAND ONNEXT");
-                    },
-                    onError: ex =>
-                    {
-                        AppendResult("COMMAND ONERROR");
-                    });
+                .ObserveOn(RxApp.TaskpoolScheduler)
+                .Select(result =>
+                {
+                    AppendResult("Command output after ObserveOn");
+                    return result;
+                })
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ =>
+                {
+                    AppendResult("Observer OnNext");
+                });
         }
 
         private IObservable<Unit> GetSomeFakeData()
         {
-            AppendResult("COMMAND BODY");
+            AppendResult("Observable body");
 
             return Observable.Create<Unit>(observer =>
-            {
-                AppendResult("COMMAND CHAIN");
+            { 
+                AppendResult("Observable itself");
 
                 observer.OnNext(Unit.Default);
                 observer.OnCompleted();
@@ -86,13 +134,15 @@ namespace ThreadingApp
 
         private void AppendResult(string result)
         {
-            _builder.AppendLine($"- {result}: {Thread.CurrentThread.ManagedThreadId}");
-            Result = _builder.ToString();
+            var threadId = Thread.CurrentThread.ManagedThreadId;
+
+            //For testing purposes
+            RxApp.MainThreadScheduler.Schedule(
+                () => Result = $"{Result}{Environment.NewLine} - {result} ThreadId: {threadId}");
         }
 
         private void ClearResult()
         {
-            _builder.Clear();
             Result = string.Empty;
         }
     }
