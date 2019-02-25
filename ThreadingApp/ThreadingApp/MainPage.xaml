@@ -1,14 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:ThreadingApp"
-             x:Class="ThreadingApp.MainPage">
+<rxui:ReactiveContentPage x:Class="ThreadingApp.MainPage"
+                          xmlns="http://xamarin.com/schemas/2014/forms"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                          xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+                          xmlns:local="clr-namespace:ThreadingApp"
+                          xmlns:rxui="clr-namespace:ReactiveUI.XamForms;assembly=ReactiveUI.XamForms"
+                          ios:Page.UseSafeArea="true"
+                          x:TypeArguments="local:MainPageViewModel">
 
     <StackLayout>
-        <!-- Place new controls here -->
-        <Label Text="Welcome to Xamarin.Forms!" 
-           HorizontalOptions="Center"
-           VerticalOptions="CenterAndExpand" />
+        <Button x:Name="StartButton" Text="Start" />
+        <Editor x:Name="ResultEditor" VerticalOptions="FillAndExpand" />
     </StackLayout>
 
-</ContentPage>
+</rxui:ReactiveContentPage>

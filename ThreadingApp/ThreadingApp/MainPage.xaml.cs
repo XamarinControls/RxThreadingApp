@@ -1,17 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xamarin.Forms;
+﻿using ReactiveUI;
+using ReactiveUI.XamForms;
 
 namespace ThreadingApp
 {
-    public partial class MainPage : ContentPage
+    public partial class MainPage : ReactiveContentPage<MainPageViewModel>
     {
         public MainPage()
         {
             InitializeComponent();
+
+            var ctx = new MainPageViewModel();
+            ViewModel = ctx;
+
+            this.OneWayBind(ViewModel, x => x.Result, x => x.ResultEditor.Text);
+            this.BindCommand(ViewModel, x => x.Start, x => x.StartButton);
         }
     }
 }
