@@ -8,13 +8,15 @@
                           ios:Page.UseSafeArea="true"
                           x:TypeArguments="local:MainPageViewModel">
 
-    <StackLayout VerticalOptions="Fill">
+    <StackLayout>
         <Button x:Name="SubscribeOnCommandOutputButton" Text="SubscribeOn Command Output" />
         <Button x:Name="SubscribeOnInnerChainButton" Text="SubscribeOn Inner Chain" />
         <Button x:Name="ClearButton" Text="Clear" />
-        <Label x:Name="ResultLabel"
+        <Label x:Name="OutputLabel"
+               FontSize="Small"
                LineBreakMode="WordWrap"
-               VerticalOptions="FillAndExpand" />
+               VerticalOptions="FillAndExpand" 
+               TextColor="DarkSlateGray"/>
     </StackLayout>
 
 </rxui:ReactiveContentPage>

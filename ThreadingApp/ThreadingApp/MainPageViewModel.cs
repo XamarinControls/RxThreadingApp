@@ -16,15 +16,28 @@ namespace ThreadingApp
 
         public ReactiveCommand<Unit, Unit> Clear { get; }
 
-        private string _result;
+        private string _result = string.Empty;
         public string Result
         {
             get => _result;
             set => this.RaiseAndSetIfChanged(ref _result, value);
         }
 
+        private string _output = string.Empty;
+        public string Output
+        {
+            get => _output;
+            set => this.RaiseAndSetIfChanged(ref _output, value);
+        }
+
         public MainPageViewModel()
         {
+            this.WhenAnyValue(vm => vm.Result)
+                .SubscribeOn(RxApp.TaskpoolScheduler)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .BindTo(this, x => x.Output);
+
+            //Ctor context is the main thread
             AppendResult("Ctor");
 
             Clear = ReactiveCommand
@@ -122,7 +135,7 @@ namespace ThreadingApp
             AppendResult("Observable body");
 
             return Observable.Create<Unit>(observer =>
-            { 
+            {
                 AppendResult("Observable itself");
 
                 observer.OnNext(Unit.Default);
@@ -135,10 +148,7 @@ namespace ThreadingApp
         private void AppendResult(string result)
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
-
-            //For testing/logging purposes
-            RxApp.MainThreadScheduler.Schedule(
-                () => Result = $"{Result}{Environment.NewLine} - {result} ThreadId: {threadId}");
+            Result = $"{Result}{Environment.NewLine} - {result}, ThreadId: {threadId}";
         }
 
         private void ClearResult()

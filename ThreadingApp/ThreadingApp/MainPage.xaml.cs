@@ -11,7 +11,7 @@ namespace ThreadingApp
 
             ViewModel = new MainPageViewModel();
 
-            this.OneWayBind(ViewModel, x => x.Result, x => x.ResultLabel.Text);
+            this.OneWayBind(ViewModel, x => x.Output, x => x.OutputLabel.Text);
             this.BindCommand(ViewModel, x => x.SubscribeOnInnerChain, x => x.SubscribeOnInnerChainButton);
             this.BindCommand(ViewModel, x => x.SubscribeOnCommandOutput, x => x.SubscribeOnCommandOutputButton);
             this.BindCommand(ViewModel, x => x.Clear, x => x.ClearButton);
