@@ -14,6 +14,8 @@ namespace ThreadingApp
 
         public ReactiveCommand<Unit, Unit> SubscribeOnCommandOutput { get; }
 
+        public ReactiveCommand<Unit, Unit> InvokedCommand { get; }
+
         public ReactiveCommand<Unit, Unit> Clear { get; }
 
         private string _result = string.Empty;
@@ -82,6 +84,21 @@ namespace ThreadingApp
                 //Conclusion: Output Scheduler must be the Main Thread (it is by default), otherwise the bound commands will "hang" the execution of the UI
                 outputScheduler: RxApp.MainThreadScheduler);
 
+            InvokedCommand = ReactiveCommand
+                .CreateFromObservable<Unit, Unit>(_ =>
+                {
+                    //Conclusion: InvokeCommand changes the command body thread and also the inner chain in case it's subscribeon is not set
+                    AppendResult($"ReactiveCommand body");
+
+                    return GetSomeFakeData()
+                        .Select(result =>
+                        {
+                            AppendResult("Observable chain");
+                            return result;
+                        });
+                },
+                outputScheduler: RxApp.MainThreadScheduler);
+
             Clear.Subscribe();
 
             SubscribeOnCommandOutput
@@ -90,8 +107,8 @@ namespace ThreadingApp
                     AppendResult("Command output before SubscribeOn");
                     return result;
                 })
-                //Conclusion: SubscribeOn won't be considered when set on the command chain!
-                //Regular observable chains will consider this (like on line 66), this is not valid for the ReactiveCommand only. WHY?
+                //Conclusion: SubscribeOn WON'T be considered on this scenario. WHY?
+                //Regular observable chains will consider this.
                 .SubscribeOn(RxApp.TaskpoolScheduler)
                 .Select(result =>
                 {
@@ -123,6 +140,20 @@ namespace ThreadingApp
                     AppendResult("Command output after ObserveOn");
                     return result;
                 })
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ =>
+                {
+                    AppendResult("Observer OnNext");
+                });
+
+            InvokedCommand
+                .Select(result =>
+                {
+                    AppendResult("Command output before SubscribeOn");
+                    return result;
+                })
+                //The SubscribeOn below is not considered
+                .SubscribeOn(RxApp.TaskpoolScheduler)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ =>
                 {

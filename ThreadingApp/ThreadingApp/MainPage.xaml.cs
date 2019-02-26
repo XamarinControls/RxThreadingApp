@@ -1,5 +1,8 @@
 ﻿using ReactiveUI;
 using ReactiveUI.XamForms;
+using System.Reactive;
+using System.Reactive.Linq;
+using Xamarin.Forms;
 
 namespace ThreadingApp
 {
@@ -15,6 +18,13 @@ namespace ThreadingApp
             this.BindCommand(ViewModel, x => x.SubscribeOnInnerChain, x => x.SubscribeOnInnerChainButton);
             this.BindCommand(ViewModel, x => x.SubscribeOnCommandOutput, x => x.SubscribeOnCommandOutputButton);
             this.BindCommand(ViewModel, x => x.Clear, x => x.ClearButton);
+
+            InvokeCommandButton
+                .Events()
+                .Clicked
+                .ObserveOn(RxApp.TaskpoolScheduler)
+                .Select(_ => Unit.Default)
+                .InvokeCommand(ViewModel, x => x.InvokedCommand);
         }
     }
 }

@@ -11,6 +11,7 @@
     <StackLayout>
         <Button x:Name="SubscribeOnCommandOutputButton" Text="SubscribeOn Command Output" />
         <Button x:Name="SubscribeOnInnerChainButton" Text="SubscribeOn Inner Chain" />
+        <Button x:Name="InvokeCommandButton" Text="Invoke Command observing TaskPool" />
         <Button x:Name="ClearButton" Text="Clear" />
         <Label x:Name="OutputLabel"
                FontSize="Small"
