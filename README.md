@@ -27,9 +27,9 @@ No one wants to use an app that hangs while you fetch some data.
 - Constructor body runs on the main thread
 - Commands run by default on the main thread if nothing is set explicitly (as they assume the current thread to run in)
 - Regular observables DO respect the `SubscribeOn` operator for setting the source sequence thread
-- `ReactiveCommand` DOES NOT respect the `SubscribeOn` operator when set on the command output (WHY?) - it should be as it is a regular observable
+- `ReactiveCommand` DOES NOT respect the `SubscribeOn` operator when set on the command output (WHY?) - it should be as it is an observable
 - Every code that runs on the "body" of the method directly (outside of the observable chain itself) will assume the caller thread as context
 - ReactiveCommand's `outputScheduler` must be set to the main thread (it is by default) - setting a different scheduler will sometimes make the command execution to "hang", specially if there is a command bound to it on the UI
-- `ObserveOn` can be set more than once on the same observable chain, it is respected properly.
+- `ObserveOn` can be set more than once on the same observable chain, it is respected properly
 - When a command is invoked using `InvokeCommand` observing a specific thread the command will assume the caller thread as context for the command execution, 
-`SubscribeOn` will be considered if set on the inner command chain only not on the command "output".
+`SubscribeOn` will be considered if set on the inner command chain only, not on the command "output"
